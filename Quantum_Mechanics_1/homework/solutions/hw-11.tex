@@ -1,0 +1,163 @@
+\documentclass[11pt,a4paper]{article}
+\input{common}
+\begin{document}
+\solutiontitle{11}{Гармонический осциллятор и лестничные операторы}{ДЗ2026(1)\_11.pdf}{с.~1}
+
+Положим \(\ell=\sqrt{\hbar/(m\omega)}\), \(Q=x/\ell\),
+\(P=\ell p/\hbar\). Тогда \([Q,P]=iI\) и
+\[
+ a=\frac{Q+iP}{\sqrt2},\qquad
+ a^\dagger=\frac{Q-iP}{\sqrt2},\qquad
+ [a,a^\dagger]=I,\qquad H=\hbar\omega(N+\tfrac12),\quad N=a^\dagger a .
+\]
+Действительно, \(2N=Q^2+P^2+i[Q,P]=Q^2+P^2-I\).
+В фоковском базисе \(N\ket n=n\ket n\).
+Коммутатор \([a,a^\dagger]=I\) показывает, что \(a,a^\dagger\)
+меняют \(n\) на \(-1,+1\) соответственно.
+Квадраты норм \(a\ket n\) и \(a^\dagger\ket n\) равны
+\(n,n+1\), поэтому при стандартном выборе фаз
+\(a\ket n=\sqrt n\ket{n-1}\) и
+\(a^\dagger\ket n=\sqrt{n+1}\ket{n+1}\).
+
+\section{Эволюция заданной суперпозиции}
+
+При \(P=-i\partial_Q\) вакуум решает \((Q+\partial_Q)\varphi_0=0\).
+Нормировка и два последовательных действия
+\((Q-\partial_Q)/\sqrt2\) дают
+\[
+ \varphi_0=\pi^{-1/4}e^{-Q^2/2},\qquad
+ \varphi_1=\sqrt2\,Q\varphi_0,\qquad
+ \varphi_2=\frac{2Q^2-1}{\sqrt2}\varphi_0 .
+\]
+Из \(Q^2-Q=\tfrac12+(2Q^2-1)/2-Q\) следует
+\[
+ \Psi(Q,0)=A\pi^{1/4}
+       \left(\tfrac12\varphi_0-\tfrac1{\sqrt2}\varphi_1
+                                 +\tfrac1{\sqrt2}\varphi_2\right).
+\]
+Норма в квадрате равна \(|A|^2\sqrt\pi(1/4+1/2+1/2)\).
+Берём \(A=2/(\sqrt5\,\pi^{1/4})\).
+Коэффициенты \(c_0,c_1,c_2\) равны \((1,-\sqrt2,\sqrt2)/\sqrt5\).
+
+\textbf{(a)} Умножая каждую компоненту на её стационарную фазу,
+получаем
+\[
+ \Psi(Q,t)=\frac{1}{\sqrt5}\bigl(
+ \varphi_0 e^{-i\omega t/2}-\sqrt2\,\varphi_1e^{-3i\omega t/2}
+                    +\sqrt2\,\varphi_2e^{-5i\omega t/2}\bigr).
+\]
+
+\textbf{(b)} По вероятностям \(|c_n|^2\) имеем
+\(\avg{N}=0/5+2/5+4/5=6/5\), откуда
+\(\avg{E}=17\hbar\omega/10\).
+
+\textbf{(c)} Две соседние пары дают среднее значение
+\[
+ \avg{a(t)}=e^{-i\omega t}(c_0^*c_1+\sqrt2\,c_1^*c_2)
+           =-\frac{3\sqrt2}{5}e^{-i\omega t}.
+\]
+Так как \(Q=(a+a^\dagger)/\sqrt2\),
+\(P=(a-a^\dagger)/(i\sqrt2)\), получаем
+\[
+ \avg{Q(t)}=-\frac65\cos\omega t,\qquad
+ \avg{P(t)}=\frac65\sin\omega t .
+\]
+
+\textbf{(d)} Из \(Q^2=N+1/2+(a^2+(a^\dagger)^2)/2\) и
+\(\avg{a^2}_{t=0}=\sqrt2\,c_0^*c_2=2/5\) следует
+\(\avg{Q^2}_{t=0}=17/10+2/5=21/10\).
+Поскольку \(m\omega^2 x^2/2=(\hbar\omega/2)Q^2\),
+\(\avg{U}_{t=0}=21\hbar\omega/20\).
+
+\section{Матрицы в фоковском базисе}
+
+Нумеруем строки и столбцы с нуля. Действие на \(\ket n\)
+даёт \(a_{mn}=\sqrt n\,\delta_{m,n-1}\) и
+\((a^\dagger)_{mn}=\sqrt{n+1}\,\delta_{m,n+1}\).
+Поэтому первые четыре строки и столбца имеют вид
+\[
+ a=\begin{pmatrix}
+ 0&1&0&0\\0&0&\sqrt2&0\\0&0&0&\sqrt3\\0&0&0&0
+ \end{pmatrix},\qquad
+ a^\dagger=\begin{pmatrix}
+ 0&0&0&0\\1&0&0&0\\0&\sqrt2&0&0\\0&0&\sqrt3&0
+ \end{pmatrix}.
+\]
+Линейные комбинации дают соответствующие блоки
+\[
+ Q=\frac1{\sqrt2}\begin{pmatrix}
+ 0&1&0&0\\1&0&\sqrt2&0\\0&\sqrt2&0&\sqrt3\\0&0&\sqrt3&0
+ \end{pmatrix},\qquad
+ P=\frac1{i\sqrt2}\begin{pmatrix}
+ 0&1&0&0\\-1&0&\sqrt2&0\\0&-\sqrt2&0&\sqrt3\\0&0&-\sqrt3&0
+ \end{pmatrix}.
+\]
+Для квадратов сначала раскрываем полные операторы,
+\(Q^2=N+1/2+(a^2+(a^\dagger)^2)/2\) и
+\(P^2=N+1/2-(a^2+(a^\dagger)^2)/2\).
+Так как \(a^2\ket n=\sqrt{n(n-1)}\ket{n-2}\) для \(n\ge2\)
+и \(a^2\ket n=0\) для \(n=0,1\), блоки равны
+\[
+ Q^2=\frac12\begin{pmatrix}
+ 1&0&\sqrt2&0\\0&3&0&\sqrt6\\\sqrt2&0&5&0\\0&\sqrt6&0&7
+ \end{pmatrix},\qquad
+ P^2=\frac12\begin{pmatrix}
+ 1&0&-\sqrt2&0\\0&3&0&-\sqrt6\\-\sqrt2&0&5&0\\0&-\sqrt6&0&7
+ \end{pmatrix}.
+\]
+Формулы через \(a,a^\dagger,N\) задают также все элементы за
+пределами выписанных блоков.
+
+\section{Коммутаторы лестничных операторов}
+
+Сохраняя порядок множителей в правиле Лейбница, имеем
+\begin{align*}
+ [a,N]&=[a,a^\dagger]a+a^\dagger[a,a]=a,\\
+ [a^\dagger,N]&=[a^\dagger,a^\dagger]a+a^\dagger[a^\dagger,a]=-a^\dagger,\\
+ [a^\dagger,a^2]&=[a^\dagger,a]a+a[a^\dagger,a]=-2a,\\
+ [a^\dagger,N^2]&=[a^\dagger,N]N+N[a^\dagger,N]
+                 =-a^\dagger N-Na^\dagger=-a^\dagger(2N+I).
+\end{align*}
+В последней строке использовано \(Na^\dagger=a^\dagger(N+I)\).
+
+\section{Движение средних в произвольном состоянии}
+
+Пусть \(\sum_n |C_n|^2=1\) и состояние имеет конечное
+\(\avg{N}\), что достаточно для существования нужных средних.
+При действии \(a\) на \(\ket{n+1}\) в скалярном
+произведении остаётся компонента \(\bra n\).
+Разность энергий соседних уровней всегда \(\hbar\omega\), откуда
+\[
+ z=\sum_{n\ge0}\sqrt{n+1}C_n^*C_{n+1},\qquad
+ \avg{a(t)}=z e^{-i\omega t},\qquad
+ \avg{a^\dagger(t)}=z^* e^{i\omega t}.
+\]
+Сумма для \(z\) сходится абсолютно по неравенству Коши --- Буняковского
+с множителями \((|C_n|)\) и \((\sqrt{n+1}|C_{n+1}|)\).
+Положим \(A_0=\sqrt2\operatorname{Re}z=\avg{Q(0)}\),
+\(B_0=\sqrt2\operatorname{Im}z=\avg{P(0)}\). Тогда
+\[
+ \avg{Q(t)}=A_0\cos\omega t+B_0\sin\omega t,\qquad
+ \avg{P(t)}=B_0\cos\omega t-A_0\sin\omega t .
+\]
+Таким образом константы \((A,B,C,D)\) из условия равны
+\((A_0,B_0,B_0,-A_0)\).
+Классические безразмерные переменные подчиняются
+\(\dot Q=\omega P,\ \dot P=-\omega Q\).
+Решение этой системы совпадает по форме с найденным движением
+средних, где начальные данные равны \(\avg{Q(0)},\avg{P(0)}\).
+
+\section{Лестничные операторы в представлении Гейзенберга}
+
+Формулы задачи 3 дают \([H,a]=-\hbar\omega a\) и
+\([H,a^\dagger]=\hbar\omega a^\dagger\).
+Поэтому \(\dot a_H=-i\omega a_H,\ \dot a^\dagger_H=i\omega a^\dagger_H\)
+с начальными операторами \(a,a^\dagger\). Решение
+\[
+ a_H(t)=e^{-i\omega t}a,\qquad
+ a_H^\dagger(t)=e^{i\omega t}a^\dagger .
+\]
+Тот же фазовый множитель можно проверить действием
+\(e^{iHt/\hbar}a e^{-iHt/\hbar}\) на каждый \(\ket n\).
+
+\end{document}

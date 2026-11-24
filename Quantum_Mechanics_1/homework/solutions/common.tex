@@ -1,0 +1,29 @@
+\usepackage[margin=22mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+\setmainfont{DejaVu Serif}
+\usepackage[unicode,hidelinks]{hyperref}
+
+\allowdisplaybreaks[1]
+\raggedright
+\setlength{\parskip}{0.35em}
+\newcommand{\dd}{\mathop{}\!\mathrm{d}}
+\newcommand{\avg}[1]{\langle #1\rangle}
+\newcommand{\ket}[1]{\lvert #1\rangle}
+\newcommand{\bra}[1]{\langle #1\rvert}
+\newcommand{\braket}[2]{\langle #1\mid #2\rangle}
+\DeclareMathOperator{\Var}{Var}
+
+\newcommand{\solutiontitle}[4]{%
+  \hypersetup{pdftitle={Квантовая механика 1. Решения ДЗ №#1}}%
+  \begin{center}
+    {\small Квантовая механика 1 \enspace\textperiodcentered\enspace Семестр 1\par}
+    \vspace{1ex}
+    {\LARGE\bfseries Решения домашнего задания №#1\par}
+    \vspace{0.5ex}
+    {\large #2\par}
+  \end{center}
+  \noindent{\small Условия приведены в файле «#3», #4.}\par\medskip
+}
