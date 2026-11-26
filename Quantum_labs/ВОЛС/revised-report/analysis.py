@@ -17,7 +17,6 @@ DATA = ROOT.parent / "raw data"
 FIGURES = ROOT / "figures"
 C_M_S = 299_792_458
 GROUP_INDEX = 1.50
-REFERENCE_GROUP_INDEX = 1.4682
 PEAK_SPLIT_NS = 1_000.0
 BASELINE_END_NS = -0.60
 WINDOW_NS = (-1.5, 8.0)
@@ -97,10 +96,7 @@ def write_results(
     pulses: tuple[Pulse, Pulse],
 ) -> None:
     delay_ns = peaks_ns[1] - peaks_ns[0]
-    grid_ns = 2 * overview.step_ns
     length_m = C_M_S * delay_ns * 1e-9 / GROUP_INDEX
-    length_grid_m = C_M_S * grid_ns * 1e-9 / GROUP_INDEX
-    reference_m = C_M_S * delay_ns * 1e-9 / REFERENCE_GROUP_INDEX
     areas = tuple(pulse_area(pulse, WINDOW_NS) for pulse in pulses)
     if min(areas) <= 0:
         raise ValueError("Площади импульсов должны быть положительными")
@@ -108,65 +104,49 @@ def write_results(
     loss = -10 * np.log10(ratio)
     relative_loss = loss / (length_m / 1_000)
 
+    variants = [
+        (5.0, BASELINE_END_NS, False),
+        (6.0, BASELINE_END_NS, False),
+        (WINDOW_NS[1], BASELINE_END_NS, True),
+        (WINDOW_NS[1], -1.0, False),
+    ]
+    losses = [loss]
+    for stop, cutoff, median in variants:
+        area0, area_l = (
+            pulse_area(prepare_pulse(trace, cutoff, median=median), (WINDOW_NS[0], stop))
+            for trace in raw_pulses
+        )
+        losses.append(10 * np.log10(area0 / area_l))
+
     values = {
         "OverviewStep": ru(overview.step_ns, 0),
         "FineStep": ru(raw_pulses[0].step_ns, 1),
-        "PeakEarly": ru(peaks_ns[0] / 1_000, 2),
-        "PeakLate": ru(peaks_ns[1] / 1_000, 2),
         "PeakDelay": ru(delay_ns / 1_000, 2),
-        "DelayLower": ru((delay_ns - grid_ns) / 1_000, 2),
-        "DelayUpper": ru((delay_ns + grid_ns) / 1_000, 2),
         "GroupIndex": ru(GROUP_INDEX, 2),
         "LengthMeters": ru(length_m, 0),
-        "LengthKm": ru(length_m / 1_000, 3),
-        "LengthLower": ru(length_m - length_grid_m, 0),
-        "LengthUpper": ru(length_m + length_grid_m, 0),
-        "ReferenceIndex": ru(REFERENCE_GROUP_INDEX, 4),
-        "ReferenceLength": ru(reference_m, 0),
-        "BackgroundLimit": ru(BASELINE_END_NS, 2),
         "WindowStart": ru(WINDOW_NS[0], 1),
         "WindowEnd": ru(WINDOW_NS[1], 1),
-        "AreaRatio": ru(ratio, 3),
+        "ShortArea": ru(areas[0], 3),
+        "LongArea": ru(areas[1], 3),
         "PathLoss": ru(loss, 2),
+        "LossLower": ru(min(losses), 2),
+        "LossUpper": ru(max(losses), 2),
         "EffectiveLoss": ru(relative_loss, 2),
     }
     lines = ["% Численные результаты из analysis.py"]
     for name, value in values.items():
         number = value.replace(",", "{,}")
         lines.append(rf"\newcommand{{\{name}}}{{{number}}}")
-    lines.append(r"\newcommand{\PulseRows}{%")
-    for label, pulse, area in zip(("Короткое", "Длинное"), pulses, areas):
-        background = ru(pulse.background, 5).replace(",", "{,}")
-        lines.append(
-            f"  {label} & {pulse.background_count} & \\({background}\\)"
-            f" & {ru(pulse.front_ns, 3)} & {ru(area, 3)} " + r"\\"
-        )
-    lines.append("}")
-
-    variants = [
-        (5.0, BASELINE_END_NS, False),
-        (6.0, BASELINE_END_NS, False),
-        (8.0, BASELINE_END_NS, False),
-        (8.0, BASELINE_END_NS, True),
-        (8.0, -1.0, False),
-    ]
-    lines.append(r"\newcommand{\SensitivityRows}{%")
-    for stop, cutoff, median in variants:
-        area0, area_l = (
-            pulse_area(prepare_pulse(trace, cutoff, median=median), (WINDOW_NS[0], stop))
-            for trace in raw_pulses
-        )
-        method = "Медиана" if median else "Среднее"
-        limit = ru(cutoff, 2).replace(",", "{,}")
-        lines.append(
-            f"  {ru(stop, 1)} & {method} & \\({limit}\\)"
-            f" & {ru(10 * np.log10(area0 / area_l), 3)} " + r"\\"
-        )
-    lines.append("}")
     (ROOT / "results.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"Задержка {delay_ns / 1_000:.2f} мкс, длина {length_m:.2f} м")
+    for label, pulse in zip(("Короткое плечо", "Плечо с катушкой"), pulses):
+        print(
+            f"{label}: фон {pulse.background:.6f} по {pulse.background_count} отсчётам, "
+            f"полувысота переднего фронта {pulse.front_ns:.3f} нс"
+        )
     print(f"S0={areas[0]:.6f}, SL={areas[1]:.6f}, SL/S0={ratio:.6f}")
     print(f"Ослабление {loss:.4f} дБ, эффективное удельное значение {relative_loss:.4f} дБ/км")
+    print(f"Ослабление при проверке окна и фона: {min(losses):.3f}–{max(losses):.3f} дБ")
 
 
 def finish_figure(fig: plt.Figure, ax: plt.Axes, filename: str) -> None:

@@ -1,0 +1,5 @@
+% В преамбуле архива для подписей таблиц задан разделитель emdash.
+\AddToHook{package/caption/after}{%
+  \DeclareCaptionLabelSeparator*{emdash}{\space\textemdash\space}%
+}
+\input{main.tex}
