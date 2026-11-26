@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 import matplotlib
 
@@ -153,6 +155,11 @@ def write_results(
     loss_min, loss_max = processing_loss_range(raw_pulses, pulses)
     relative_min = loss_min / ((length_m + length_grid_m) / 1_000)
     relative_max = loss_max / ((length_m - length_grid_m) / 1_000)
+    window_width_ns = WINDOW_NS[1] - WINDOW_NS[0]
+    area_shifts = tuple(window_width_ns * pulse.background_std for pulse in pulses)
+    background_loss_shift = (10 / np.log(10)) * sum(
+        shift / area for shift, area in zip(area_shifts, areas)
+    )
 
     values = {
         "OverviewStep": ru(overview.step_ns, 0),
@@ -164,24 +171,43 @@ def write_results(
         "LengthGrid": ru(length_grid_m, 0),
         "ReferenceIndex": ru(REFERENCE_GROUP_INDEX, 4),
         "ReferenceLength": ru(reference_length_m, 0),
+        "ReferenceShift": ru(abs(reference_length_m - length_m), 0),
         "WindowStart": ru(WINDOW_NS[0], 1),
         "WindowEnd": ru(WINDOW_NS[1], 1),
+        "WindowWidth": ru(window_width_ns, 1),
         "ShortArea": ru(areas[0], 3),
         "LongArea": ru(areas[1], 3),
+        "ShortCount": str(pulses[0].background_count),
+        "LongCount": str(pulses[1].background_count),
         "ShortNoise": ru(pulses[0].background_std, 4),
         "LongNoise": ru(pulses[1].background_std, 4),
+        "ShortAreaShift": ru(area_shifts[0], 4),
+        "LongAreaShift": ru(area_shifts[1], 4),
+        "BackgroundLossShift": ru(background_loss_shift, 3),
         "PathLoss": ru(loss, 2),
         "LossLower": ru(loss_min, 2),
         "LossUpper": ru(loss_max, 2),
+        "LossMinus": ru(round(loss, 2) - round(loss_min, 2), 2),
+        "LossPlus": ru(round(loss_max, 2) - round(loss, 2), 2),
         "EffectiveLoss": ru(relative_loss, 2),
         "EffectiveLower": ru(relative_min, 2),
         "EffectiveUpper": ru(relative_max, 2),
+        "EffectiveMinus": ru(round(relative_loss, 2) - round(relative_min, 2), 2),
+        "EffectivePlus": ru(round(relative_max, 2) - round(relative_loss, 2), 2),
     }
-    lines = ["% Численные результаты из analysis.py"]
+    lines = []
     for name, value in values.items():
         number = value.replace(",", "{,}")
         lines.append(rf"\newcommand{{\{name}}}{{{number}}}")
-    (ROOT / "results.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    report = ROOT / "main.tex"
+    source = report.read_bytes()
+    head, opening, rest = source.partition(b"% BEGIN GENERATED RESULTS\n")
+    _, closing, tail = rest.partition(b"% END GENERATED RESULTS\n")
+    if not opening or not closing:
+        raise ValueError("В отчёте не найден блок численных результатов")
+    updated = head + opening + ("\n".join(lines) + "\n").encode("ascii") + closing + tail
+    if updated != source:
+        report.write_bytes(updated)
     print(f"Задержка {delay_ns / 1_000:.2f} мкс, длина {length_m:.2f} м, вклад сетки ±{length_grid_m:.2f} м")
     for label, pulse in zip(("Короткое плечо", "Плечо с катушкой"), pulses):
         print(
@@ -247,6 +273,14 @@ def plot_traces(
     finish_figure(fig, ax, "pulses.pdf")
 
 
+def pack_images() -> None:
+    source = (ROOT / "main.tex").read_text(encoding="utf-8")
+    figure_names = set(re.findall(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}", source))
+    with ZipFile(ROOT / "images.zip", "w", compression=ZIP_DEFLATED) as archive:
+        for name in sorted(figure_names):
+            archive.writestr(ZipInfo(name), (ROOT / name).read_bytes(), compress_type=ZIP_DEFLATED)
+
+
 def main() -> None:
     overview = read_trace("C2300000.txt")
     split = int(np.searchsorted(overview.time_ns, PEAK_SPLIT_NS))
@@ -259,6 +293,7 @@ def main() -> None:
     pulses = tuple(prepare_pulse(trace) for trace in raw_pulses)
     write_results(overview, peaks_ns, raw_pulses, pulses)
     plot_traces(overview, peak_indices, pulses)
+    pack_images()
 
 
 if __name__ == "__main__":
